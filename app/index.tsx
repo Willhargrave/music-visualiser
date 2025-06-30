@@ -3,22 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Linking, View, Text, Button, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../auth-context';
 
-type SpotifyPlaylist = {
-  id: string;
-  name: string;
-};
 
-type SpotifyTrack = {
-  track: {
-    id: string;
-    name: string;
-    uri: string;
-    artists: { name: string }[];
-    album: {
-      images: { url: string }[];
-    };
-  };
-};
 
 
 export default function Index() {
