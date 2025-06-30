@@ -7,10 +7,11 @@ type Props = {
     nowPlaying: CurrentlyPlaying;
     onTogglePlayPause: () => void;
     style?: ViewStyle
+    onSkip: () => void;
   };  
 
 
-export default function NowPlayingBar({ nowPlaying, onTogglePlayPause, style }: Props) {
+export default function NowPlayingBar({ nowPlaying, onTogglePlayPause, style, onSkip }: Props) {
   return (
     <View
     style={[
@@ -48,10 +49,13 @@ export default function NowPlayingBar({ nowPlaying, onTogglePlayPause, style }: 
         </Text>
       </View>
       <TouchableOpacity onPress={onTogglePlayPause} style={{ marginLeft: 10 }}>
-        <Text style={{ color: '#fff', fontSize: 24 }}>
-          {nowPlaying.isPlaying ? '⏸️' : '▶️'}
-        </Text>
-      </TouchableOpacity>
+    <Text style={{ color: '#fff', fontSize: 24 }}>
+      {nowPlaying.isPlaying ? '⏸️' : '▶️'}
+    </Text>
+  </TouchableOpacity>
+  §<TouchableOpacity onPress={onSkip} style={{ marginLeft: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 24 }}>⏭️</Text>
+  </TouchableOpacity>
     </View>
   );
 }

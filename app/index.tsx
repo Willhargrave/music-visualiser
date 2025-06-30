@@ -100,6 +100,16 @@ export default function Index() {
       }
     });
   };
+
+  const skipToNext = () => {
+    fetch("https://api.spotify.com/v1/me/player/next", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(() => {
+      fetchCurrentlyPlaying(); // Refresh now playing
+    });
+  };
+  
   
 
 if (!token) {
@@ -164,7 +174,8 @@ return (
   <NowPlayingBar
     nowPlaying={nowPlaying}
     onTogglePlayPause={togglePlayPause}
-    style={{ bottom: 40 }} // move up by 40px, adjust as needed
+    style={{ bottom: 40 }}
+    onSkip={skipToNext}
   />
 )}
   </View>
