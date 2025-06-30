@@ -14,3 +14,16 @@ type SpotifyTrack = {
     };
   };
 };
+
+type CurrentlyPlaying = {
+    name: string;
+    artists: string;
+    albumImage: string;
+    isPlaying: boolean;
+    uri: string;
+  };
+
+type Props = {
+    nowPlaying: CurrentlyPlaying;
+    onTogglePlayPause: () => void;
+  };  

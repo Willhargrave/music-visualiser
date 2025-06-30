@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Linking, View, Text, Button, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../auth-context';
+import NowPlayingBar from '@/components/NowPlayingBar';
 
 
 
@@ -11,6 +12,8 @@ export default function Index() {
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
+
 
   const router = useRouter();
 
@@ -53,6 +56,16 @@ export default function Index() {
         res.text().then(t => console.log("Playback error:", t));
       }
     });
+  };
+  const togglePlayPause = () => {
+    if (!nowPlaying) return;
+    const endpoint = nowPlaying.isPlaying
+      ? "https://api.spotify.com/v1/me/player/pause"
+      : "https://api.spotify.com/v1/me/player/play";
+    fetch(endpoint, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    })
   };
   
 
@@ -114,6 +127,9 @@ return (
         />
       </>
     )}
+    {nowPlaying && (
+  <NowPlayingBar nowPlaying={nowPlaying} onTogglePlayPause={togglePlayPause} />
+)}
   </View>
 );
 }
