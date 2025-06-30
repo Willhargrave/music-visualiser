@@ -18,6 +18,49 @@ export default function Index() {
   const router = useRouter();
 
   useEffect(() => {
+      if (token) {
+        fetchCurrentlyPlaying(); 
+        const interval = setInterval(fetchCurrentlyPlaying, 5000); 
+        return () => clearInterval(interval);
+      }
+    }, [token]);
+    
+
+    const fetchCurrentlyPlaying = () => {
+      fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.status === 204 ? null : res.json())
+        .then(data => {
+          if (data && data.item) {
+            setNowPlaying({
+              name: data.item.name,
+              artists: data.item.artists.map((a: { name: string }) => a.name).join(', '),
+              albumImage: data.item.album.images[1]?.url || data.item.album.images[0]?.url,
+              isPlaying: data.is_playing,
+              uri: data.item.uri,
+            });
+          } else {
+            setNowPlaying(null);
+          }
+        });
+    };
+
+    const togglePlayPause = () => {
+      if (!nowPlaying) return;
+      const endpoint = nowPlaying.isPlaying
+        ? "https://api.spotify.com/v1/me/player/pause"
+        : "https://api.spotify.com/v1/me/player/play";
+      fetch(endpoint, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(() => {
+        fetchCurrentlyPlaying(); // <-- update nowPlaying state right away
+      });
+    };
+    
+
+  useEffect(() => {
     if (token) {
       fetch('https://api.spotify.com/v1/me/playlists', {
         headers: { Authorization: `Bearer ${token}` }
@@ -57,16 +100,6 @@ export default function Index() {
       }
     });
   };
-  const togglePlayPause = () => {
-    if (!nowPlaying) return;
-    const endpoint = nowPlaying.isPlaying
-      ? "https://api.spotify.com/v1/me/player/pause"
-      : "https://api.spotify.com/v1/me/player/play";
-    fetch(endpoint, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    })
-  };
   
 
 if (!token) {
@@ -80,7 +113,7 @@ if (!token) {
 
 
 return (
-  <View style={{ flex: 1, padding: 20 }}>
+  <View style={{ flex: 1, padding: 20, paddingBottom: 80 }}>
     <Text>Welcome, {username || "Spotify User"}!</Text>
     <Text style={{ marginVertical: 10, fontWeight: 'bold' }}>Your Playlists:</Text>
 
@@ -127,8 +160,12 @@ return (
         />
       </>
     )}
-    {nowPlaying && (
-  <NowPlayingBar nowPlaying={nowPlaying} onTogglePlayPause={togglePlayPause} />
+   {nowPlaying && (
+  <NowPlayingBar
+    nowPlaying={nowPlaying}
+    onTogglePlayPause={togglePlayPause}
+    style={{ bottom: 40 }} // move up by 40px, adjust as needed
+  />
 )}
   </View>
 );

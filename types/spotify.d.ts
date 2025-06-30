@@ -22,8 +22,3 @@ type CurrentlyPlaying = {
     isPlaying: boolean;
     uri: string;
   };
-
-type Props = {
-    nowPlaying: CurrentlyPlaying;
-    onTogglePlayPause: () => void;
-  };  

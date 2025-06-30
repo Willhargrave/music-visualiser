@@ -1,27 +1,39 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ViewStyle } from 'react-native';
 
 
-export default function NowPlayingBar({ nowPlaying, onTogglePlayPause }: Props) {
+
+type Props = {
+    nowPlaying: CurrentlyPlaying;
+    onTogglePlayPause: () => void;
+    style?: ViewStyle
+  };  
+
+
+export default function NowPlayingBar({ nowPlaying, onTogglePlayPause, style }: Props) {
   return (
     <View
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#222',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-        elevation: 12,
-      }}
+    style={[
+        {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#222',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 12,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+          elevation: 12,
+        },
+        style,
+      ]}
+
     >
       <Image
         source={{ uri: nowPlaying.albumImage }}
