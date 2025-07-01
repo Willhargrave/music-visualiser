@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Linking, View, Text, Button, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../auth-context';
 import NowPlayingBar from '@/components/NowPlayingBar';
+import { MaterialIcons } from '@expo/vector-icons';
 
 
 
@@ -13,6 +14,9 @@ export default function Index() {
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
+  const [showPlaylists, setShowPlaylists] = useState(false);
+  const [showTracks, setShowTracks] = useState(true);
+
 
 
   const router = useRouter();
@@ -125,28 +129,50 @@ if (!token) {
 return (
   <View style={{ flex: 1, padding: 20, paddingBottom: 80 }}>
     <Text>Welcome, {username || "Spotify User"}!</Text>
-    <Text style={{ marginVertical: 10, fontWeight: 'bold' }}>Your Playlists:</Text>
 
-    <FlatList
-      data={playlists}
-      keyExtractor={item => item.id}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          onPress={() => {
-            setSelectedPlaylist(item.id);
-            fetchTracks(item.id);
-          }}
-          style={{ padding: 10, backgroundColor: '#eee', marginBottom: 8, borderRadius: 8 }}
-        >
-          <Text>{item.name}</Text>
-        </TouchableOpacity>
-      )}
-      style={{ marginBottom: 16 }}
-    />
+    {/* Playlists Section Toggle */}
+    <TouchableOpacity
+      onPress={() => setShowPlaylists(prev => !prev)}
+      style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}
+    >
+      <Text style={{ fontWeight: 'bold', fontSize: 16, marginRight: 8 }}>Your Playlists:</Text>
+      <MaterialIcons
+        name={showPlaylists ? "expand-less" : "expand-more"}
+        size={22}
+        color="#333"
+      />
+    </TouchableOpacity>
 
-    {tracks.length > 0 && (
+    {/* Playlists List */}
+    {showPlaylists && (
+      <FlatList
+        data={playlists}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedPlaylist(item.id);
+              fetchTracks(item.id);
+              setShowTracks(true); // open tracklist when a playlist is picked
+            }}
+            style={{ padding: 10, backgroundColor: '#eee', marginBottom: 8, borderRadius: 8 }}
+          >
+            <Text>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        style={{ marginBottom: 16 }}
+      />
+    )}
+
+    {/* Tracklist with close button */}
+    {tracks.length > 0 && showTracks && (
       <>
-        <Text style={{ marginVertical: 10, fontWeight: 'bold' }}>Tracks:</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 16, marginRight: 8 }}>Tracks:</Text>
+          <TouchableOpacity onPress={() => setShowTracks(false)}>
+            <MaterialIcons name="close" size={22} color="#333" />
+          </TouchableOpacity>
+        </View>
         <FlatList
           data={tracks}
           keyExtractor={item => item.track.id}
@@ -170,15 +196,18 @@ return (
         />
       </>
     )}
-   {nowPlaying && (
-  <NowPlayingBar
-    nowPlaying={nowPlaying}
-    onTogglePlayPause={togglePlayPause}
-    style={{ bottom: 40 }}
-    onSkip={skipToNext}
-  />
-)}
+
+    {/* Now Playing Bar */}
+    {nowPlaying && (
+      <NowPlayingBar
+        nowPlaying={nowPlaying}
+        onTogglePlayPause={togglePlayPause}
+        style={{ bottom: 40 }}
+        onSkip={skipToNext}
+      />
+    )}
   </View>
 );
+
 }
 
