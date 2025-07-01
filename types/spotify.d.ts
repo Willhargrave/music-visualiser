@@ -22,3 +22,8 @@ type CurrentlyPlaying = {
     isPlaying: boolean;
     uri: string;
   };
+
+  type PulseProps = {
+    tempo: number;
+    energy?: number; 
+  };

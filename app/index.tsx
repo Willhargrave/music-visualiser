@@ -4,7 +4,7 @@ import { Alert, Linking, View, Text, Button, FlatList, TouchableOpacity, Image }
 import { useAuth } from '../auth-context';
 import NowPlayingBar from '@/components/NowPlayingBar';
 import { MaterialIcons } from '@expo/vector-icons';
-
+import PulseAnimation from '@/components/Animation';
 
 
 
@@ -16,6 +16,9 @@ export default function Index() {
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const [showPlaylists, setShowPlaylists] = useState(false);
   const [showTracks, setShowTracks] = useState(true);
+  const [audioFeatures, setAudioFeatures] = useState<{ tempo: number, energy: number } | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+
 
 
 
@@ -28,7 +31,31 @@ export default function Index() {
         return () => clearInterval(interval);
       }
     }, [token]);
+
+    useEffect(() => {
+      if (currentTrackId && token) {
+        fetch(`https://api.spotify.com/v1/audio-features/${currentTrackId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then(res => res.json())
+          .then(features => {
+            setAudioFeatures({ tempo: features.tempo, energy: features.energy });
+          })
+          .catch(() => setAudioFeatures(null));
+      } else {
+        setAudioFeatures(null);
+      }
+    }, [currentTrackId, token]);
     
+    useEffect(() => {
+      if (token) {
+        fetch('https://api.spotify.com/v1/me/playlists', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => res.json())
+          .then(data => setPlaylists(data.items || []));
+      }
+    }, [token]);
 
     const fetchCurrentlyPlaying = () => {
       fetch('https://api.spotify.com/v1/me/player/currently-playing', {
@@ -40,15 +67,20 @@ export default function Index() {
             setNowPlaying({
               name: data.item.name,
               artists: data.item.artists.map((a: { name: string }) => a.name).join(', '),
-              albumImage: data.item.album.images[1]?.url || data.item.album.images[0]?.url,
+              albumImage: data.item.album.images[2]?.url || data.item.album.images[0]?.url,
               isPlaying: data.is_playing,
               uri: data.item.uri,
             });
+            if (data.item.id !== currentTrackId) {
+              setCurrentTrackId(data.item.id);
+            }
           } else {
             setNowPlaying(null);
+            setCurrentTrackId(null);
           }
         });
     };
+    
 
     const togglePlayPause = () => {
       if (!nowPlaying) return;
@@ -63,16 +95,6 @@ export default function Index() {
       });
     };
     
-
-  useEffect(() => {
-    if (token) {
-      fetch('https://api.spotify.com/v1/me/playlists', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => setPlaylists(data.items || []));
-    }
-  }, [token]);
 
   const fetchTracks = (playlistId: string) => {
     fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -110,11 +132,9 @@ export default function Index() {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     }).then(() => {
-      fetchCurrentlyPlaying(); // Refresh now playing
+      fetchCurrentlyPlaying();
     });
   };
-  
-  
 
 if (!token) {
   return (
@@ -125,12 +145,9 @@ if (!token) {
   );
 }
 
-
 return (
   <View style={{ flex: 1, padding: 20, paddingBottom: 80 }}>
     <Text>Welcome, {username || "Spotify User"}!</Text>
-
-    {/* Playlists Section Toggle */}
     <TouchableOpacity
       onPress={() => setShowPlaylists(prev => !prev)}
       style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}
@@ -142,8 +159,6 @@ return (
         color="#333"
       />
     </TouchableOpacity>
-
-    {/* Playlists List */}
     {showPlaylists && (
       <FlatList
         data={playlists}
@@ -153,7 +168,7 @@ return (
             onPress={() => {
               setSelectedPlaylist(item.id);
               fetchTracks(item.id);
-              setShowTracks(true); // open tracklist when a playlist is picked
+              setShowTracks(true); 
             }}
             style={{ padding: 10, backgroundColor: '#eee', marginBottom: 8, borderRadius: 8 }}
           >
@@ -164,7 +179,6 @@ return (
       />
     )}
 
-    {/* Tracklist with close button */}
     {tracks.length > 0 && showTracks && (
       <>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
@@ -196,8 +210,9 @@ return (
         />
       </>
     )}
-
-    {/* Now Playing Bar */}
+    {audioFeatures && (
+      <PulseAnimation tempo={audioFeatures.tempo} energy={audioFeatures.energy} />
+    )}
     {nowPlaying && (
       <NowPlayingBar
         nowPlaying={nowPlaying}
