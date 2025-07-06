@@ -24,10 +24,11 @@ export default function Login() {
         'user-read-email',
         'user-read-private',
         'user-modify-playback-state', 
+        'user-library-read',
         'user-read-playback-state',   
         'user-read-currently-playing',
       ],
-      
+    
       redirectUri,
       responseType: 'code',
       usePKCE: true,

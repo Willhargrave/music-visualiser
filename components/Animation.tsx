@@ -24,8 +24,11 @@ export default function PulseAnimation({ tempo, energy = 0.6 }: PulseProps) {
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    backgroundColor: `rgba(0,200,255,${0.5 + energy * 0.5})`,
+    backgroundColor: `rgba(${100 + 155 * energy},${200 - 100 * energy},255,${0.6 + 0.4 * energy})`,
     shadowOpacity: 0.6 + 0.4 * energy,
+    width: 40 + 40 * energy, 
+    height: 40 + 40 * energy,
+    borderRadius: (40 + 40 * energy) / 2,
   }));
 
   return (

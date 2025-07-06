@@ -23,11 +23,30 @@ export default function Index() {
 
 
   const router = useRouter();
+  console.log('Token in render:', token);
+
+
+  useEffect(() => {
+    if (!token) return;
+    const testTrackId = "7qiZfU4dY1lWllzX7mPBI3";
+    console.log('Spotify Access Token:', token);
+    fetch(`https://api.spotify.com/v1/audio-features/${testTrackId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(features => {
+        console.log('Known good Audio Features response:', features);
+      });
+  }, [token]);
+
+  
+  
 
   useEffect(() => {
       if (token) {
         fetchCurrentlyPlaying(); 
         const interval = setInterval(fetchCurrentlyPlaying, 5000); 
+        console.log('Spotify Access Token:', token);
         return () => clearInterval(interval);
       }
     }, [token]);
@@ -39,6 +58,7 @@ export default function Index() {
         })
           .then(res => res.json())
           .then(features => {
+            console.log('Audio Features API raw response:', features);
             setAudioFeatures({ tempo: features.tempo, energy: features.energy });
           })
           .catch(() => setAudioFeatures(null));
@@ -72,6 +92,7 @@ export default function Index() {
               uri: data.item.uri,
             });
             if (data.item.id !== currentTrackId) {
+              console.log('Setting currentTrackId:', data.item.id);
               setCurrentTrackId(data.item.id);
             }
           } else {
@@ -80,6 +101,7 @@ export default function Index() {
           }
         });
     };
+    
     
 
     const togglePlayPause = () => {
@@ -91,7 +113,7 @@ export default function Index() {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       }).then(() => {
-        fetchCurrentlyPlaying(); // <-- update nowPlaying state right away
+        fetchCurrentlyPlaying();
       });
     };
     
@@ -211,7 +233,10 @@ return (
       </>
     )}
     {audioFeatures && (
+      <>
+       {console.log('Tempo:', audioFeatures.tempo, 'Energy:', audioFeatures.energy)}
       <PulseAnimation tempo={audioFeatures.tempo} energy={audioFeatures.energy} />
+      </>
     )}
     {nowPlaying && (
       <NowPlayingBar
@@ -223,6 +248,5 @@ return (
     )}
   </View>
 );
-
 }
 
