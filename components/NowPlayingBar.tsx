@@ -36,10 +36,15 @@ export default function NowPlayingBar({ nowPlaying, onTogglePlayPause, style, on
       ]}
 
     >
-      <Image
-        source={{ uri: nowPlaying.albumImage }}
-        style={{ width: 48, height: 48, borderRadius: 8, marginRight: 12 }}
-      />
+ {/* <Image
+  source={
+    nowPlaying.albumImage
+      ? { uri: nowPlaying.albumImage }
+      : require("../assets/default-cover.png")
+  }
+  style={{ width: 48, height: 48, borderRadius: 8, marginRight: 12 }}
+/> */}
+
       <View style={{ flex: 1 }}>
         <Text style={{ color: '#fff', fontWeight: 'bold' }} numberOfLines={1}>
           {nowPlaying.name}
