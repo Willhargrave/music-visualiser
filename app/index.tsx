@@ -1,68 +1,90 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Button, Alert } from "react-native";
-import AudioRecord from "react-native-audio-record";
-import PulseAnimation from "@/components/Animation"; 
+import React, { useState, useRef } from "react";
+import { View, Text, Button, StyleSheet, Alert } from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import { Audio, AVPlaybackStatus } from "expo-av";
 
 export default function Index() {
-  const [recording, setRecording] = useState(false);
-  const [amplitude, setAmplitude] = useState(0);
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
-  // Helper: Calculate amplitude from PCM buffer
-  const calculateAmplitude = (pcm: Uint8Array) => {
-    let sum = 0;
-    for (let i = 0; i < pcm.length; i++) {
-      const val = pcm[i] - 128;
-      sum += val * val;
+  const pickAudio = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "audio/*",
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.assets && result.assets.length > 0) {
+        setAudioUri(result.assets[0].uri);
+        setFileName(result.assets[0].name);
+      } else {
+        setAudioUri(null);
+        setFileName(null);
+      }
+    } catch (err) {
+      Alert.alert("Error", "Could not pick audio file.");
     }
-    return Math.min(1, Math.sqrt(sum / pcm.length) / 128);
   };
 
-  const startMic = async () => {
-    // @ts-ignore
-    const granted = await AudioRecord.requestAuthorization();
-    if (!granted) {
-      Alert.alert("Microphone permission denied");
-      return;
+  const playAudio = async () => {
+    if (!audioUri) return;
+    try {
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUri },
+        { shouldPlay: true },
+        (status: AVPlaybackStatus) => {
+          if ("isPlaying" in status) setIsPlaying(status.isPlaying);
+        }
+      );
+      soundRef.current = sound;
+    } catch (err) {
+      Alert.alert("Error", "Failed to play audio.");
     }
-    AudioRecord.init({
-      sampleRate: 44100,
-      channels: 1,
-      bitsPerSample: 8,
-      audioSource: 6,
-      wavFile: "test.wav",
-    });
-    setAmplitude(0);
-    setRecording(true);
-
-    AudioRecord.on("data", (data: string) => {
-      const pcm = Uint8Array.from(atob(data), c => c.charCodeAt(0));
-      const amp = calculateAmplitude(pcm);
-      setAmplitude(amp);
-    });
-
-    AudioRecord.start();
   };
 
-  const stopMic = async () => {
-    setRecording(false);
-    AudioRecord.stop();
+  const stopAudio = async () => {
+    if (soundRef.current) {
+      await soundRef.current.stopAsync();
+      setIsPlaying(false);
+    }
   };
 
-  useEffect(() => {
+  // Cleanup on unmount
+  React.useEffect(() => {
     return () => {
-      AudioRecord.stop();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
     };
   }, []);
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ marginBottom: 10 }}>Mic-powered Music Visualiser (Pulse)</Text>
-      {!recording ? (
-        <Button title="Start Visualiser" onPress={startMic} />
-      ) : (
-        <Button title="Stop Visualiser" onPress={stopMic} />
+    <View style={styles.container}>
+      <Text style={styles.title}>Music Visualiser</Text>
+      <Button title="Pick an audio file" onPress={pickAudio} />
+
+      {audioUri && (
+        <View style={{ marginTop: 20, alignItems: "center" }}>
+          <Text style={styles.filename}>File: {fileName || "Unknown"}</Text>
+          <Button
+            title={isPlaying ? "Stop" : "Play"}
+            onPress={isPlaying ? stopAudio : playAudio}
+          />
+        </View>
       )}
-      <PulseAnimation tempo={120} energy={amplitude} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 20 },
+  filename: { marginBottom: 10 },
+});
+
